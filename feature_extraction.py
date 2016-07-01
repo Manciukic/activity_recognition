@@ -143,6 +143,10 @@ def get_features_from_windows(data, t, fsamp, windows, col):
             if length != 0:
                 fqs = np.arange(0, fsamp, fsamp / length)
 
+                # import matplotlib.pyplot as plt
+                # plt.plot(fqs, psd)
+                # plt.show()
+
                 for j in range(0, len(bands) - 1):
                     pw, fmx = power_fmax(psd, fqs, bands[j], bands[j + 1])
                     feat = np.hstack([feat, pw, fmx])

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+from read_data import load_file
 from tools import selectCol
 
 
@@ -53,3 +53,9 @@ def get_min_length(labels, n):
         if length < min:
             min = length
     return min
+
+def plot_file_acc(filename, header=0, sep="\t", srate=0.1):
+    data = load_file(filename, header=header, sep=sep)
+    time = np.linspace(0, 0 + (data.shape[0]) * srate, num=data.shape[0], endpoint=False)
+    plt.plot(time, data)
+    plt.show()
