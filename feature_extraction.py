@@ -1,42 +1,7 @@
 from __future__ import division
 import numpy as np
-import matplotlib as plt
-
-def import_data (sources, labels, cols, header=1, sep=";", fsamp=50):
-    '''
-    Loads data for source and returns data read
-    '''
-    data_all=np.ndarray(shape=(0, len(cols)+1))
-    labels_all=np.ndarray(shape=(0,1))
-    # print "data_all.shape", data_all.shape
-    # print "labels_all.shape", labels_all.shape
-
-    start_time=0
-    for i,name in enumerate(sources):
-        #Reads the "name" file
-
-        data=load_file(name, header=header, sep=sep)
-        rows=data.shape[0]
-        time = np.arange(0, (rows)*fsamp, fsamp) + start_time
-        start_time=time[-1]+fsamp
-        data=np.column_stack((time, data))
-        label=np.zeros(rows) + int(labels[i])
-        label.shape=(label.shape[0], 1)
-    	data_all=np.row_stack((data_all, data))
-    	labels_all=np.row_stack((labels_all, label))
-        # print "data_all.shape", data_all.shape
-        # print "labels_all.shape", labels_all.shape
-    cols=["TIME"]+cols
-    return data_all, labels_all, cols
-
-def load_file(filename, header=1, sep=";"):
-    '''
-    Load data from file
-    :param filename: name of the file where data is stored
-    :return: data as np.array
-    '''
-    data = np.genfromtxt(filename, delimiter=sep, skip_header=header)
-    return data
+from tools import concat_string, selectCol, power_fmax
+from windowing import get_windows_no_mix
 
 def extract_features_acc(data_acc, t, fsamp, col_acc, windows):
     '''
@@ -57,7 +22,7 @@ def extract_features_acc(data_acc, t, fsamp, col_acc, windows):
     data_acc=np.column_stack((data_acc, np.sqrt(data_acc[:, 0]**2+data_acc[:,2]**2)))
     # data_acc_more, col_all=get_differences(data_acc, col_all)
     #===================================
-    samples, labels=windowing_and_extraction(data_acc, t, fsamp, windows, col_all)
+    samples, labels=get_features_from_windows(data_acc, t, fsamp, windows, col_all)
     return samples, labels
 
 def extract_features_gyr(data, t, fsamp, col_gyr, windows):
@@ -73,7 +38,7 @@ def extract_features_gyr(data, t, fsamp, col_gyr, windows):
     '''
     # data_more, col_gyr=get_differences(data, col_gyr)
     #===================================
-    samples, cols=windowing_and_extraction(data, t, fsamp,windows, col_gyr)
+    samples, cols=get_features_from_windows(data, t, fsamp, windows, col_gyr)
     return samples, cols
 
 def extract_features_mag(data, t, fsamp, col_mag, windows):
@@ -89,10 +54,10 @@ def extract_features_mag(data, t, fsamp, col_mag, windows):
     '''
     # data_more, col_mag=get_differences(data, col_mag)
     #===================================
-    samples, cols=windowing_and_extraction(data, t, fsamp, windows, col_mag)
+    samples, cols=get_features_from_windows(data, t, fsamp, windows, col_mag)
     return samples, cols
 
-def windowing_and_extraction(data, t, fsamp, windows, col):
+def get_features_from_windows(data, t, fsamp, windows, col):
     samples = []
     columns=np.array([])
 
@@ -171,47 +136,6 @@ def windowing_and_extraction(data, t, fsamp, windows, col):
     samples_array=np.array(samples)
     return samples_array, columns
 
-def concat_string(array, str):
-    result=[]
-    for element in array:
-        result.append(element+str)
-    return np.array(result)
-
-def get_windows_full_label(time, labels):
-    '''
-    Window = Label length
-    :param labels: np.array of labels
-    :return: windows as list of [start, end]
-    '''
-    wl= [[0,0]]
-    rl= [labels[0]]
-    for i in range(1, len(labels)):
-        if labels[i] != labels[i-1]:
-    	    wl[-1][1]= time[i]
-            wl.append([time[i],0])
-            rl.append(labels[i])
-    wl[-1][1]= time[-1]
-    return wl, np.array(rl)
-
-def get_windows_no_mix(time, labels, WINLEN, WINSTEP):
-    '''
-    calculates the windows, restarting from beginning for every new label
-    return: (windows, labels). windows is a list of [start, end], label is a list of int
-    labels: array of labels (int)
-    '''
-    windows=[]
-    labs=np.array([])
-    parts, mini_labels = get_windows_full_label(time, labels)
-    for start, end in parts:
-        t_partial=time[(time>=start) & (time<end)]
-        partial=labels[(time>=start) & (time<end)]
-        starts=np.arange(t_partial[0], t_partial[-1]-WINLEN, WINSTEP)
-        ends=starts+WINLEN
-        for i in range(len(starts)):
-            windows.append([starts[i], ends[i]])
-            labs=np.r_[labs, partial[0]]
-    return windows, labs
-
 def exctract_features(data, labels, cols, WINLEN=2000, WINSTEP=1500, fsamp=50):
     '''
     :param data: the data
@@ -259,68 +183,3 @@ def exctract_features(data, labels, cols, WINLEN=2000, WINSTEP=1500, fsamp=50):
     Y = winlabs
 
     return X, Y, columns
-
-def power_fmax(spec,freq,fmin,fmax):
-    #returns power in band
-    psd_band=spec[np.where((freq > fmin) & (freq<=fmax))]
-    # print len(psd_band)
-    freq_band=freq[np.where((freq > fmin) & (freq<=fmax))]
-    # print len(psd_band)
-    if len(psd_band)!=0:
-        powerinband = np.sum(psd_band)/len(psd_band)
-        fmax=freq_band[np.argmax(psd_band)]
-    else:
-        powerinband=0
-        fmax=0
-    return powerinband, fmax
-
-def selectCol(vect, head, cols):
-    '''
-    Select the cols columns from vector, given its header
-    :param vect: the array to slice
-    :param head: the header of the array (either as np.ndarray or list)
-    :param cols: the columns to select (either as np.ndarray, list or str)
-    :return: the slice of the array
-    '''
-    if type(head) is list:
-        head=np.array(head)
-    elif type(head) is not np.ndarray:
-        raise ValueError("head is neither a np.ndarray or a list")
-
-    # for i in range(len(head)):
-    #     head[i]=head[i].upper()
-    #
-    # for i in range(len(cols)):
-    #     cols[i]=cols[i].upper()
-
-    result=np.array([])
-    for col in cols:
-        mask=np.zeros(len(head), dtype=bool)
-        mask = (head==col)
-        if result.shape[0]!=0:
-            result=np.column_stack((result, vect[:,mask]))
-        else:
-            result=vect[:,mask]
-
-    if result.shape[1]==1 :
-        result=result.flatten()
-    elif result.shape[1]==0:
-        raise IndexError("No column named "+", ".join(cols))
-
-    return result
-
-def save(X, Y):
-    np.save("X", X)
-    np.save("Y", Y)
-
-filenames = ['./data_sample/Subject_2_LAYING.txt', './data_sample/Subject_2_SITTING.txt', './data_sample/Subject_2_STANDING.txt', './data_sample/Subject_2_WALKING.txt', './data_sample/Subject_2_WALKDWN.txt', './data_sample/Subject_2_WALKUPS.txt']
-# labels = ['Laying', 'Sitting', 'Standing', 'Walking', 'Walking UP', 'Walking DOWN'];
-labels=[1,2,3,4,5,6,7]
-cols=["ACCX", "ACCY", "ACCZ"]
-raw_data, labels_all, cols = import_data(filenames, labels, cols, header=0, sep="\t")
-X, Y, columns = exctract_features(raw_data, labels_all, cols)
-
-print "X", type(X), X.shape
-print "Y", type(Y), Y.shape
-print "columns", type(columns), columns
-
