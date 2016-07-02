@@ -116,7 +116,7 @@ def get_features_from_windows(data, t, fsamp, windows, col):
         # print feat.shape, columns.shape
 
         # integral
-        feat = np.hstack([feat, np.sum(data_win, axis=0) * (t_end - t_start) / data_win.shape[0]])
+        feat = np.hstack([feat, integrate(data_win, t_start, t_end)])
         columns = np.hstack([columns, concat_string(col, '_integral')])
         # print feat.shape, columns.shape
 
@@ -215,3 +215,17 @@ def exctract_features(data, labels, cols, WINLEN=2, WINSTEP=1.5, fsamp=10):
     Y = winlabs
 
     return X, Y, columns
+
+
+def integrate (data, tstart, tend):
+    """
+    Calculates the integral of data, an array of values of the window [tstart, tend], using the trapezes rule
+    :param data: the data to integrate
+    :param tstart: start time of the window
+    :param tend: end time of the window
+    :return: the integral calculated with trapezes rule
+    """
+    n = data.shape[0]
+    discrete_sum = np.sum(data[1:-1], axis=0)   # discrete sum of f(a+k*delta_x), excluding f(a) and f(b)
+    integral = (tend - tstart) / n * ((data[0] + data[-1]) / 2 + discrete_sum)
+    return integral
