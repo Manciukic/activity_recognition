@@ -1,6 +1,5 @@
-#!/usr/bin/python
+from __future__ import division
 from math import ceil
-
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import cross_validation as sklearn_cross_validation
@@ -137,6 +136,9 @@ def pick_random_values_rate(X, Y, length=100, rates=[0.05, 0.05, 0.1, 0.2, 0.3, 
 
 
 def predict_evaluate(X, Y, clf, cv=5, p=False):
+    """
+    Given X and Y, checks the accuracy of the algorithm
+    """
     test_size = int(X.shape[0] / cv)
     Y.shape = [Y.shape[0], 1]
     frame = np.concatenate((X, Y), axis=1)
@@ -202,5 +204,42 @@ def multiple_tests(X, Y, clf, n=50):
 
 
 def cross_validation(X, Y, clf):
+    """
+    Cross validation of selected classifier.
+    """
     scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=10)
     print "Accuracy %.5f (ds %.5f)" % (scores.mean(), scores.std())
+
+
+def predict(test_X, test_Y, clf, max_lbl=6, lbl_array=[]):
+    """
+    Given test_X and test_Y, checks the accuracy of the algorithm. Returns the predicted label
+    """
+    labels_predict = clf.predict(test_X)
+    score = clf.score(test_X, test_Y)
+    print "Accuracy %.5f" % (score)
+    result = np.zeros((test_Y.shape[0], 2))
+    for i in range(test_Y.shape[0]):
+        result[i, 0] = test_Y[i]
+        result[i, 1] = labels_predict[i]
+    result = np.sort(result, axis=0)
+    lbl_bar_plot = np.array([])
+    length = labels_predict.shape[0]
+    print length
+    for i in range(max_lbl):
+        n_i = labels_predict[labels_predict == i].shape[0]
+        percent = n_i / length
+        lbl_bar_plot = np.append(lbl_bar_plot, percent)
+    size = result.shape[0]
+    plt.plot(range(size), result[:, 0], range(size), result[:, 1], [0, 0], [6, -1])
+
+    x_axis = range(max_lbl)
+    if len(lbl_array) == 0 :
+        lbl_array = x_axis
+
+    fig, ax = plt.subplots()
+    ax.bar(x_axis, lbl_bar_plot, 0.35)
+    ax.set_xticklabels(lbl_array)
+    plt.show()
+
+    return np.argmax(lbl_bar_plot)
