@@ -7,7 +7,7 @@ from tools import loadXY
 
 X, Y = loadXY()
 
-# Test values for our classificator
+# Test values for our classifier
 # [selX, selY] = tr.pick_random_values_stratified(X, Y)
 
 clf = RandomForestClassifier()
