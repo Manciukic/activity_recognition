@@ -3,7 +3,7 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn import cross_validation
+from sklearn import cross_validation as sklearn_cross_validation
 from sklearn import svm, ensemble
 from sklearn.tree import DecisionTreeClassifier
 
@@ -18,15 +18,16 @@ def multiple_tests_C(X, Y, start=1, end=1001, step=20):
     Slist = []  # List keeping track of mean score to draw a graph
     for C in Clist:
         clf = svm.LinearSVC(C=C)
-        scores = cross_validation.cross_val_score(clf, X, Y, cv=5)
+        scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=5)
         Slist.append(scores.mean())
         # If score better than MAX, show it and save it!!
         if scores.mean() > M:
-            print "C=%.2f\t Accuracy %.5f (+/- %.5f)" % (C, scores.mean(), scores.std() * 2)
+            # print "C=%.2f\t Accuracy %.5f (+/- %.5f)" % (C, scores.mean(), scores.std() * 2)
             M = scores.mean()
     # Draw graph
-    plt.plot(Clist, Slist)
-    plt.show()
+    # plt.plot(Clist, Slist)
+    # plt.show()
+    print "Accuracy %.5f" % (M)
 
 
 def multiple_tests_LinearSVC(X, Y, C, n=50):
@@ -37,7 +38,7 @@ def multiple_tests_LinearSVC(X, Y, C, n=50):
     Slist = []
     for i in range(n):
         clf = svm.LinearSVC(C=C)
-        scores = cross_validation.cross_val_score(clf, X, Y, cv=5)
+        scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=5)
         Slist.append(scores.mean())
         if scores.mean() > M:
             print "Accuracy %.5f (+/- %.5f)" % (scores.mean(), scores.std() * 2)
@@ -54,7 +55,7 @@ def multiple_tests_Tree(X, Y, n=50):
     Slist = []
     for i in range(n):
         clf = DecisionTreeClassifier()
-        scores = cross_validation.cross_val_score(clf, X, Y, cv=5)
+        scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=5)
         Slist.append(scores.mean())
         if scores.mean() > M:
             print "Accuracy %.5f (+/- %.5f)" % (scores.mean(), scores.std() * 2)
@@ -135,7 +136,7 @@ def pick_random_values_rate(X, Y, length=100, rates=[0.05, 0.05, 0.1, 0.2, 0.3, 
     return [np.concatenate(new_X), np.concatenate(new_Y)]
 
 
-def predict_evaluate(X, Y, clf, cv=5):
+def predict_evaluate(X, Y, clf, cv=5, p=False):
     test_size = int(X.shape[0] / cv)
     Y.shape = [Y.shape[0], 1]
     frame = np.concatenate((X, Y), axis=1)
@@ -147,15 +148,17 @@ def predict_evaluate(X, Y, clf, cv=5):
     clf = clf.fit(train_X, train_Y)
     labels_predict = clf.predict(test_X)
     score = clf.score(test_X, test_Y)
-    print "Accuracy %.5f" % (score)
+    if p :
+        print "Accuracy %.5f" % (score)
     result = np.zeros((test_Y.shape[0], 2))
     for i in range(test_Y.shape[0]):
         result[i, 0] = test_Y[i]
         result[i, 1] = labels_predict[i]
     result = np.sort(result, axis=0)
     size = result.shape[0]
-    plt.plot(range(size), result[:, 0], range(size), result[:, 1])
-    plt.show()
+    # plt.plot(range(size), result[:, 0], range(size), result[:, 1])
+    # plt.show()
+    return score
 
 
 def multiple_tests_RandomForest(X, Y, n=50):
@@ -168,7 +171,7 @@ def multiple_tests_RandomForest(X, Y, n=50):
     for i in range(n):
         print "i =", i
         clf = ensemble.RandomForestClassifier()
-        scores = cross_validation.cross_val_score(clf, X, Y, cv=5)
+        scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=5)
         Slist.append(scores.mean())
         sum += scores.mean()
         if scores.mean() > M:
@@ -177,3 +180,27 @@ def multiple_tests_RandomForest(X, Y, n=50):
     plt.plot(range(n), Slist)
     plt.show()
     print "Mean = ", sum / n
+
+
+def multiple_tests(X, Y, clf, n=50):
+    """
+    This function tests the performance of a classifier among several tests
+    """
+    mean = 0
+    max = 0
+    min = 1
+    for i in range(n):
+        selX, selY = pick_random_values_stratified(X, Y)
+        score = predict_evaluate(selX, selY, clf)
+        mean += score
+        if score > max:
+            max = score
+        if score < min:
+            min = score
+    mean /= n
+    print "Mean accuracy %.5f , Max accuracy %.5f, Min accuracy %.5f" % (mean, max, min)
+
+
+def cross_validation(X, Y, clf):
+    scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=10)
+    print "Accuracy %.5f (ds %.5f)" % (scores.mean(), scores.std())
