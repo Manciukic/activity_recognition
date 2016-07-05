@@ -203,11 +203,11 @@ def multiple_tests(X, Y, clf, n=50):
     print "Mean accuracy %.5f , Max accuracy %.5f, Min accuracy %.5f" % (mean, max, min)
 
 
-def cross_validation(X, Y, clf):
+def cross_validation(X, Y, clf, cv=10):
     """
     Cross validation of selected classifier.
     """
-    scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=10)
+    scores = sklearn_cross_validation.cross_val_score(clf, X, Y, cv=cv)
     print "Accuracy %.5f (ds %.5f)" % (scores.mean(), scores.std())
 
 

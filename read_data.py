@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def import_data(sources, labels, cols, header=1, sep=";", srate=0.1):
+def import_data(sources, labels, cols, header=1, sep=";", srate=0.1, cut_sec=0):
     """
     Loads data for source and returns data read
     :param sources: the file names to read from
@@ -22,8 +22,11 @@ def import_data(sources, labels, cols, header=1, sep=";", srate=0.1):
         # Reads the "name" file
 
         data = load_file(name, header=header, sep=sep)
+        if cut_sec>0 :
+            cut_row = int(cut_sec/srate)
+            data = data[cut_row:-cut_row,:]
         rows = data.shape[0]
-        time = np.linspace(start_time, start_time + (rows) * srate, num=rows, endpoint=False)
+        time = np.linspace(start_time, start_time + rows * srate, num=rows, endpoint=False)
         start_time = time[-1] + srate
         data = np.column_stack((time, data))
         label = np.zeros(rows) + int(labels[i])
