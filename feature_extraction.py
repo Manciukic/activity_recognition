@@ -151,8 +151,8 @@ def get_features_from_windows(data, t, fsamp, windows, col):
                     pw, fmx = power_fmax(psd, fqs, bands[j], bands[j + 1])
                     feat = np.hstack([feat, pw, fmx])
                     columns = np.hstack([columns,
-                                         prefix + '_power_' + str(bands[j]) + '-' + str(bands[j + 1]),
-                                         prefix + '_fmax_' + str(bands[j]) + '-' + str(bands[j + 1])])
+                                         prefix+'_power_'+str(bands[j])+'-'+str(bands[j+1]),
+                                         prefix+'_fmax_'+str(bands[j])+'-'+str(bands[j+1])])
                     # print feat.shape, columns.shape
             else:
                 print "LENGTH = 0"
@@ -160,8 +160,8 @@ def get_features_from_windows(data, t, fsamp, windows, col):
                     pw, fmx = [0, 0]
                     feat = np.hstack([feat, pw, fmx])
                     columns = np.hstack([columns,
-                                         prefix + '_power_' + str(bands[j]) + '-' + str(bands[j + 1]),
-                                         prefix + '_fmax_' + str(bands[j]) + '-' + str(bands[j + 1])])
+                                         prefix+'_power_'+str(bands[j])+'-'+str(bands[j+1]),
+                                         prefix+'_fmax_'+str(bands[j])+'-'+str(bands[j+1])])
                     # print feat.shape, columns.shape
         samples.append(feat)
     samples_array = np.array(samples)
