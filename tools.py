@@ -112,3 +112,11 @@ def build_filenames(prefix, suffixes, n):
             filenames.append(prefix + str(n) + suffix)
             labels.append(l)
     return filenames, labels
+
+def module(data):
+    """
+    Calculates vector module
+    :param data: np.ndarray (shape = n,3), rows = values, columns= x, y, z
+    :return: the vector module column as a np.array 1d
+    """
+    return np.sqrt(data[:, 0] ** 2 + data[:, 1] ** 2 + data[:, 2] ** 2)

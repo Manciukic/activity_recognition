@@ -2,7 +2,7 @@ from __future__ import division
 
 import numpy as np
 
-from tools import concat_string, selectCol, power_fmax
+from tools import concat_string, selectCol, power_fmax, module
 from windowing import get_windows_no_mix
 
 
@@ -20,7 +20,7 @@ def extract_features_acc(data_acc, t, fsamp, col_acc, windows):
     col_mod = ['ACCMOD']
     col_all = np.r_[col_acc, np.array(col_mod)]
 
-    data_acc = np.column_stack((data_acc, np.sqrt(data_acc[:, 0] ** 2 + data_acc[:, 1] ** 2 + data_acc[:, 2] ** 2)))
+    data_acc = np.column_stack((data_acc, module(data_acc)))
     # data_acc=np.column_stack((data_acc, np.sqrt(data_acc[:, 0]**2+data_acc[:,2]**2)))
     # data_acc_more, col_all=get_differences(data_acc, col_all)
     # ===================================
@@ -150,7 +150,8 @@ def get_features_from_windows(data, t, fsamp, windows, col):
                 for j in range(0, len(bands) - 1):
                     pw, fmx = power_fmax(psd, fqs, bands[j], bands[j + 1])
                     feat = np.hstack([feat, pw, fmx])
-                    columns = np.hstack([columns, prefix + '_power_' + str(bands[j]) + '-' + str(bands[j + 1]),
+                    columns = np.hstack([columns,
+                                         prefix + '_power_' + str(bands[j]) + '-' + str(bands[j + 1]),
                                          prefix + '_fmax_' + str(bands[j]) + '-' + str(bands[j + 1])])
                     # print feat.shape, columns.shape
             else:
@@ -158,7 +159,8 @@ def get_features_from_windows(data, t, fsamp, windows, col):
                 for j in range(0, len(bands) - 1):
                     pw, fmx = [0, 0]
                     feat = np.hstack([feat, pw, fmx])
-                    columns = np.hstack([columns, prefix + '_power_' + str(bands[j]) + '-' + str(bands[j + 1]),
+                    columns = np.hstack([columns,
+                                         prefix + '_power_' + str(bands[j]) + '-' + str(bands[j + 1]),
                                          prefix + '_fmax_' + str(bands[j]) + '-' + str(bands[j + 1])])
                     # print feat.shape, columns.shape
         samples.append(feat)
@@ -219,13 +221,14 @@ def exctract_features(data, labels, cols, WINLEN=2, WINSTEP=1.5, fsamp=10):
 
 def integrate (data, tstart, tend):
     """
-    Calculates the integral of data, an array of values of the window [tstart, tend], using the trapezes rule
+    Calculates the integral of data, an array of values of the window [tstart, tend],
+    using the trapezes rule
     :param data: the data to integrate
     :param tstart: start time of the window
     :param tend: end time of the window
     :return: the integral calculated with trapezes rule
     """
     n = data.shape[0]
-    discrete_sum = np.sum(data[1:-1], axis=0)   # discrete sum of f(a+k*delta_x), excluding f(a) and f(b)
+    discrete_sum = np.sum(data[1:-1], axis=0)   # discrete sum of f(a+k*delta_x)
     integral = (tend - tstart) / n * ((data[0] + data[-1]) / 2 + discrete_sum)
     return integral
